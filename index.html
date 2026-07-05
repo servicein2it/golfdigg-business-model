@@ -977,7 +977,7 @@
     var pct=(N>1?(i/(N-1))*100:100);
     prog.style.width=pct+'%';
     if(ballwrap){
-      ballwrap.style.left=pct+'%';
+      ballwrap.style.left=Math.max(0.9,Math.min(99.1,pct))+'%';
       ballwrap.classList.toggle('sunk', i===N-1 && !reduce);
       if(ball && !reduce && lastIdx!==-1 && i!==N-1){
         var rc=i>=lastIdx?'roll':'rollback';
