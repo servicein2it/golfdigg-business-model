@@ -330,10 +330,39 @@
   .btn svg{width:18px;height:18px}
   .btn.tool{width:auto;padding:0 12px;gap:7px;font-size:.8rem}
 
-  /* progress bar */
-  .progress{position:fixed;top:0;left:0;right:0;height:3px;z-index:61;background:transparent}
-  .progress>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--fairway),var(--brass-bright));
-    transition:width .5s var(--ease)}
+  /* progress bar — a golf ball rolls the fairway toward the 18th hole */
+  .progress{position:fixed;top:0;left:0;right:0;height:16px;z-index:61;pointer-events:none}
+  .progress .rail{position:absolute;left:0;right:0;bottom:0;height:3px;background:transparent}
+  .progress .rail>i{display:block;height:100%;width:0;border-radius:0 2px 2px 0;
+    background:linear-gradient(90deg,var(--fairway),var(--brass-bright));transition:width .55s var(--ease)}
+  .progress .cup{position:absolute;right:2px;bottom:-1px;width:10px;height:5px;border-radius:50%;
+    background:radial-gradient(ellipse at center,#0b1c14 55%,rgba(11,28,20,.12));opacity:.6}
+  .progress .flag{position:absolute;right:4px;bottom:3px;width:1.5px;height:11px;background:var(--ink-faint);border-radius:1px}
+  .progress .flag::after{content:"";position:absolute;top:0;left:1.5px;width:0;height:0;
+    border-left:8px solid var(--flag);border-top:3.5px solid transparent;border-bottom:3.5px solid transparent}
+  .ballwrap{position:absolute;bottom:1px;left:0;transform:translateX(-50%);transition:left .55s var(--ease);z-index:62}
+  .golfball{display:block;width:12px;height:12px;border-radius:50%;transform-origin:center;
+    background:
+      radial-gradient(circle at 31% 27%,rgba(0,0,0,.07) .6px,transparent 1.5px),
+      radial-gradient(circle at 63% 45%,rgba(0,0,0,.07) .6px,transparent 1.5px),
+      radial-gradient(circle at 45% 68%,rgba(0,0,0,.07) .6px,transparent 1.5px),
+      radial-gradient(circle at 34% 30%,#ffffff,#ced6c9 82%);
+    box-shadow:0 1px 2px rgba(0,0,0,.45)}
+  .golfball.roll{animation:ballroll .55s var(--ease)}
+  .golfball.rollback{animation:ballrollback .55s var(--ease)}
+  @keyframes ballroll{0%{transform:translateY(0) rotate(0)}48%{transform:translateY(-5px) rotate(190deg)}100%{transform:translateY(0) rotate(360deg)}}
+  @keyframes ballrollback{0%{transform:translateY(0) rotate(0)}48%{transform:translateY(-5px) rotate(-190deg)}100%{transform:translateY(0) rotate(-360deg)}}
+  .ballwrap.sunk .golfball{animation:ballsink .5s var(--ease) forwards}
+  @keyframes ballsink{0%{transform:translateY(0) scale(1);opacity:1}55%{transform:translateY(1px) scale(.65)}100%{transform:translateY(3px) scale(.25);opacity:0}}
+  @media (prefers-reduced-motion:reduce){.golfball.roll,.golfball.rollback,.ballwrap.sunk .golfball{animation:none}}
+
+  /* Thai explanation line (bilingual second line) */
+  .th{font-family:"Sukhumvit Set","Noto Sans Thai","Leelawadee UI","Thonburi",var(--font-body);
+    font-size:clamp(.9rem,.5vh + .5vw,1.05rem);line-height:1.6;color:var(--fairway);max-width:60ch;
+    margin-top:9px;padding-left:12px;border-left:2px solid var(--brass)}
+  .slide--cover .th{color:#C6E6D5;border-left-color:var(--brass-bright);max-width:44ch}
+  .slide--dark .th{color:#BFE3CF;border-left-color:var(--brass-bright)}
+  .slide--divider .th{color:#C6E6D5;border-left-color:var(--brass-bright);max-width:46ch;margin-top:16px}
 
   /* side arrows */
   .sidebtn{position:fixed;top:50%;transform:translateY(-50%);z-index:55;width:46px;height:46px;
@@ -373,7 +402,12 @@
     padding:1px 6px;font-size:.9em;color:var(--ink-soft)}
 </style>
 
-<div class="progress" aria-hidden="true"><i id="prog"></i></div>
+<div class="progress" aria-hidden="true">
+  <div class="rail"><i id="prog"></i></div>
+  <span class="cup"></span>
+  <span class="flag"></span>
+  <span class="ballwrap" id="ballwrap"><span class="golfball" id="ball"></span></span>
+</div>
 
 <div class="deck" id="deck">
   <div class="track" id="track">
@@ -892,6 +926,7 @@
   var N=slides.length, i=0;
 
   var cCur=document.getElementById('cCur'), cTot=document.getElementById('cTot'), prog=document.getElementById('prog');
+  var ballwrap=document.getElementById('ballwrap'), ball=document.getElementById('ball'), lastIdx=-1;
   var prev=document.getElementById('prev'), next=document.getElementById('next');
   var sPrev=document.getElementById('sPrev'), sNext=document.getElementById('sNext');
   cTot.textContent=N;
@@ -900,10 +935,56 @@
 
   /* auto-number content slides (skips cover + dividers) so inserts stay correct */
   (function(){var c=0;slides.forEach(function(s){var el=s.querySelector('.k-eyebrow .num');if(el){c++;el.textContent=pad(c);}});})();
+
+  /* inject a Thai explanation under each slide's second line (bilingual) */
+  var TH={
+    "Cover":"กอล์ฟดิกก์ให้นักกอล์ฟจองเวลาออกรอบแบบเรียลไทม์ที่สนามกว่า 300 แห่ง และช่วยให้สนามขาย ‘เวลาว่าง’ ราว 40% ที่ปกติต้องเสียเปล่า ให้กลายเป็นรายได้",
+    "Part 1 — How it works":"ส่วนที่ 1 — อธิบายแบบเข้าใจง่าย ว่าธุรกิจนี้ทำอะไร ให้บริการใคร และหารายได้อย่างไร",
+    "In plain terms":"พูดให้ง่ายที่สุด กอล์ฟดิกก์ทำหน้าที่จับคู่ ‘นักกอล์ฟที่อยากออกรอบ’ กับ ‘สนามที่มีเวลาว่างเหลือ’ แล้วเก็บส่วนแบ่งเล็กน้อยจากทุกการจอง",
+    "What Golfdigg is":"สนามกอล์ฟมีต้นทุนคงที่สูง และเวลาออกรอบจะหมดค่าทันทีเมื่อเวลานั้นผ่านไป กอล์ฟดิกก์รวบรวมเวลาว่างเหล่านี้ ตั้งราคาแบบยืดหยุ่น ให้จองได้ในแตะเดียว แล้วเก็บค่าคอมมิชชั่นจากทุกรอบ",
+    "The problem":"เวลาออกรอบที่ขายไม่หมดคือรายได้ที่รั่วไหลระดับพันล้านบาทต่อปี เพราะเมื่อเวลาผ่านไป มูลค่าก็สูญเปล่าทันที",
+    "How it works":"กอล์ฟดิกก์จับคู่ความต้องการของนักกอล์ฟกับเวลาว่างของสนามแบบเรียลไทม์ รับชำระเงิน และออกใบยืนยันการจองให้ทันที",
+    "Product":"หัวใจคือระบบจองเวลาออกรอบ แล้วต่อยอดด้วยบริการไลฟ์สไตล์กอล์ฟครบวงจร",
+    "Business model":"แพลตฟอร์มแบบ ‘สินทรัพย์เบา’ — ไม่ต้องเป็นเจ้าของสนาม แต่ได้ประโยชน์ทั้งสองฝั่ง",
+    "Revenue model":"รายได้หลักมาจากค่าคอมมิชชั่นการจอง แล้วเสริมด้วยบริการต่าง ๆ รอบการออกรอบ",
+    "Unit economics":"ลองดูตัวเลขต่อการจอง 1 ครั้งแบบสมมุติ (เป็นตัวอย่างเพื่อการวิเคราะห์ ไม่ใช่ตัวเลขจริงของบริษัท)",
+    "Market":"ตลาดกอล์ฟไทยเหมาะกับโมเดลนี้มาก ทั้งนักกอล์ฟในประเทศและนักท่องเที่ยวกอล์ฟจำนวนมหาศาล",
+    "Customers":"ลูกค้าสองกลุ่มในธุรกรรมเดียว — นักกอล์ฟ (ฝั่งดีมานด์) และสนามกอล์ฟ (ฝั่งซัพพลาย)",
+    "Traction":"เริ่มจากนักกอล์ฟคนหนึ่งที่เบื่อการโทรจองทีละสนาม จนเติบโตเป็นบริการจองกอล์ฟที่ประกาศตัวเป็นอันดับ 1 ของไทย",
+    "Growth flywheel":"ทุกครั้งที่จองสำเร็จ วงล้อการเติบโตก็หมุนต่อ ยิ่งมีคนใช้ยิ่งโต",
+    "Competitive moat":"ทำไมคู่แข่งถึงลอกเลียนแบบได้ยาก",
+    "Funding":"ได้รับการสนับสนุนเชิงกลยุทธ์จากกลุ่มอินทัช (InVent เครือ Intouch / AIS)",
+    "Team":"สร้างโดยนักกอล์ฟ บริหารโดยทีมงานมืออาชีพ",
+    "Part 2 — Analysis":"ส่วนที่ 2 — วิเคราะห์ว่าเขามีอะไร ยังขาดอะไร และช่องว่างตรงไหนที่สินค้าที่ดีกว่าจะเข้าไปชนะได้",
+    "SWOT at a glance":"มองภาพรวมกอล์ฟดิกก์ด้วย SWOT — จุดแข็ง จุดอ่อน โอกาส และภัยคุกคาม",
+    "What they have":"นี่คือ ‘คูเมือง’ (ความได้เปรียบ) ที่ผู้เล่นรายใหม่ต้องเทียบให้ได้ เลี่ยงให้เป็น หรือทำให้ไม่สำคัญ",
+    "What they need":"จุดที่เขายังขาด คือช่องว่างที่เราเข้าไปแทรกและเอาชนะได้",
+    "Opportunities":"ช่องว่างในตลาดที่ยังเปิดกว้างรอให้คว้า",
+    "Where a better product wins":"แก่นกลยุทธ์ในหนึ่งประโยค — อย่าไปแข่งลดราคากับเขา แต่จงชนะด้วยประสบการณ์ที่ดีกว่าและช่องทางรายได้ที่หลากหลายกว่า",
+    "Vision":"จากแอปจองกอล์ฟ สู่ ‘ซูเปอร์แอปกอล์ฟ’ ของเมืองไทย",
+    "Thank you":"กอล์ฟดิกก์เปลี่ยนเวลาออกรอบที่ว่างเปล่า ให้กลายเป็นตลาดที่เติบโตต่อเนื่องและใช้ทุนน้อย — และยังมีเส้นทางอีกยาวไกลให้เล่น"
+  };
+  slides.forEach(function(s){
+    var txt=TH[s.getAttribute('data-title')]; if(!txt) return;
+    var anchor=s.querySelector('.lead')||s.querySelector('.cover-sub')||s.querySelector('.part-sub')||s.querySelector('h2');
+    if(!anchor||!anchor.parentNode) return;
+    var p=document.createElement('p'); p.className='th'; p.setAttribute('lang','th'); p.textContent=txt;
+    anchor.parentNode.insertBefore(p, anchor.nextSibling);
+  });
   function render(){
     track.style.setProperty('--i', i);
     cCur.textContent=pad(i+1);
-    prog.style.width=(N>1?(i/(N-1))*100:100)+'%';
+    var pct=(N>1?(i/(N-1))*100:100);
+    prog.style.width=pct+'%';
+    if(ballwrap){
+      ballwrap.style.left=pct+'%';
+      ballwrap.classList.toggle('sunk', i===N-1 && !reduce);
+      if(ball && !reduce && lastIdx!==-1 && i!==N-1){
+        var rc=i>=lastIdx?'roll':'rollback';
+        ball.classList.remove('roll','rollback'); void ball.offsetWidth; ball.classList.add(rc);
+      }
+    }
+    lastIdx=i;
     prev.disabled=sPrev.disabled=(i===0);
     next.disabled=sNext.disabled=(i===N-1);
     slides.forEach(function(s,k){
