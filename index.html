@@ -262,6 +262,50 @@
     color:#C4D3C8;font-size:.86rem;line-height:1.55}
   .disc b{color:#EAF1E9}
 
+  /* section dividers */
+  .slide--divider .slide-inner{justify-content:center}
+  .slide--divider .part-num{font-family:var(--font-mono);font-size:.82rem;letter-spacing:.26em;
+    text-transform:uppercase;color:var(--brass-bright)}
+  .slide--divider h2{font-size:clamp(2.2rem,3vh + 3vw,4.4rem);color:#F3F7F1;letter-spacing:-.03em;margin:14px 0 0}
+  .slide--divider .part-sub{font-family:var(--font-serif);font-style:italic;color:#C9D6CC;
+    font-size:clamp(1.05rem,1vh + .9vw,1.5rem);margin-top:18px;max-width:46ch;line-height:1.5}
+  .slide--divider .part-rule{width:66px;height:3px;background:var(--brass-bright);border-radius:2px;margin-top:26px}
+
+  /* plain-terms "everyone wins" row */
+  .winrow{display:flex;flex-wrap:wrap;gap:10px}
+  .win{flex:1 1 180px;text-align:center;padding:13px 12px;border:1px dashed var(--fairway);border-radius:12px;
+    background:var(--surface);font-size:.88rem;color:var(--ink-soft)}
+  .win b{color:var(--fairway);display:block;font-family:var(--font-display);font-size:1rem;margin-bottom:2px}
+
+  /* SWOT matrix */
+  .swot{display:grid;grid-template-columns:1fr 1fr;gap:clamp(11px,1.6vh,15px)}
+  @media (max-width:640px){.swot{grid-template-columns:1fr}}
+  .qa{border:1px solid var(--line);border-top:3px solid var(--qc,var(--fairway));border-radius:var(--r);
+    padding:clamp(13px,2vh,20px);background:var(--surface)}
+  .qa .ql{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--qc);font-weight:700}
+  .qa .qh{font-size:.78rem;color:var(--ink-faint);margin-left:8px}
+  .qa ul{margin:10px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+  .qa li{font-size:.85rem;color:var(--ink-soft);padding-left:15px;position:relative;line-height:1.4}
+  .qa li::before{content:"";position:absolute;left:0;top:.5em;width:6px;height:6px;border-radius:50%;background:var(--qc)}
+  .qa.s{--qc:var(--fairway)}.qa.w{--qc:var(--flag)}.qa.o{--qc:var(--brass-bright)}.qa.t{--qc:var(--ink-faint)}
+
+  /* comparison table (gap -> edge) */
+  .cmp{width:100%;border-collapse:collapse;min-width:540px;font-size:.92rem}
+  .cmp th{text-align:left;padding:13px 20px;font-family:var(--font-mono);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase}
+  .cmp th.a{color:var(--ink-faint)}.cmp th.b{color:var(--fairway)}
+  .cmp td{padding:12px 20px;border-top:1px solid var(--line-soft);vertical-align:top}
+  .cmp td.a{color:var(--ink-soft);width:44%}
+  .cmp td.b{color:var(--ink);font-weight:600}
+  .cmp td.b::before{content:"→ ";color:var(--brass);font-weight:700}
+  .cmp tbody tr:hover{background:color-mix(in srgb,var(--fairway) 5%,transparent)}
+
+  /* callout note */
+  .callout{border-left:3px solid var(--brass);background:var(--surface-2);padding:12px 16px;
+    border-radius:0 10px 10px 0;font-size:.85rem;color:var(--ink-soft);margin-top:clamp(14px,2.2vh,20px);line-height:1.5}
+  .callout b{color:var(--ink)}
+  .slide--dark .callout{background:rgba(255,255,255,.05);color:#C4D3C8;border-left-color:var(--brass-bright)}
+  .slide--dark .callout b{color:#EAF1E9}
+
   /* ---------------- CHROME (deck controls) ---------------- */
   .chrome{position:fixed;left:0;right:0;bottom:0;z-index:60;align-items:center;justify-content:space-between;
     gap:12px;padding:10px clamp(14px,3vw,26px);
@@ -348,7 +392,36 @@
           <div class="chip"><span class="k">80%</span><span class="l">Peak saving</span></div>
         </div>
       </div>
-      <div class="cover-foot">Business Model Presentation · Compiled 2026</div>
+      <div class="cover-foot">Business Model &amp; Opportunity Analysis · Compiled 2026</div>
+    </section>
+
+    <!-- P1 · DIVIDER -->
+    <section class="slide slide--dark slide--divider" data-title="Part 1 — How it works">
+      <div class="slide-inner">
+        <span class="part-num">Part 1</span>
+        <h2>How Golfdigg works</h2>
+        <p class="part-sub">In plain language — what the business does, who it serves, and how it makes money.</p>
+        <div class="part-rule"></div>
+      </div>
+    </section>
+
+    <!-- P1 · IN PLAIN TERMS -->
+    <section class="slide" data-title="In plain terms">
+      <div class="slide-inner">
+        <span class="eyebrow k-eyebrow"><span class="num">00</span> · In plain terms</span>
+        <h2>It's like Booking.com — but for golf tee times.</h2>
+        <p class="lead">Strip away the jargon and Golfdigg does one simple thing: it connects golfers who want to play with golf courses that have empty tee times — and keeps a small cut of every round it fills.</p>
+        <div class="grid g3 mt">
+          <div class="card"><span class="tag">The problem it solves</span><h3>Empty slots, hard booking</h3><p>Courses can't sell every tee time, and golfers found booking slow, pricey and hard to compare.</p></div>
+          <div class="card"><span class="tag">What Golfdigg does</span><h3>Book any course, instantly</h3><p>One app shows live tee times at 300+ courses — book and pay in seconds, often at a big last-minute discount.</p></div>
+          <div class="card"><span class="tag">How it makes money</span><h3>A cut of each booking</h3><p>Golfdigg keeps a 10–20% commission per round. The course fills a seat it would have lost; the golfer saves.</p></div>
+        </div>
+        <div class="winrow mt-s">
+          <div class="win"><b>The course</b> fills an empty slot</div>
+          <div class="win"><b>The golfer</b> saves up to 80%</div>
+          <div class="win"><b>Golfdigg</b> earns a commission</div>
+        </div>
+      </div>
     </section>
 
     <!-- 1 · WHAT IT IS -->
@@ -628,6 +701,118 @@
       </div>
     </section>
 
+    <!-- P2 · DIVIDER -->
+    <section class="slide slide--dark slide--divider" data-title="Part 2 — Analysis">
+      <div class="slide-inner">
+        <span class="part-num">Part 2</span>
+        <h2>Analyzing the business</h2>
+        <p class="part-sub">What they have, what they're missing, and where a better product can win.</p>
+        <div class="part-rule"></div>
+      </div>
+    </section>
+
+    <!-- A · SWOT -->
+    <section class="slide" data-title="SWOT at a glance">
+      <div class="slide-inner">
+        <span class="eyebrow k-eyebrow"><span class="num">00</span> · Competitive analysis</span>
+        <h2>Golfdigg at a glance — a SWOT.</h2>
+        <div class="swot mt-s">
+          <div class="qa s"><span class="ql">Strengths</span><span class="qh">what they have</span>
+            <ul><li>Market leader &amp; trusted brand — "Thailand's No.1"</li><li>300+ course network across 40 provinces</li><li>100K+ golfers, backed by Intouch / AIS</li><li>Years of booking &amp; pricing data</li></ul></div>
+          <div class="qa w"><span class="ql">Weaknesses</span><span class="qh">what they need</span>
+            <ul><li>Thin, commission-only margins</li><li>Discount-led — price-sensitive, low loyalty</li><li>Concentrated in one country (Thailand)</li><li>Largely transactional; likely dated UX</li></ul></div>
+          <div class="qa o"><span class="ql">Opportunities</span><span class="qh">the openings</span>
+            <ul><li>Underserved inbound-tourist market</li><li>Subscriptions, fintech &amp; course SaaS</li><li>All-in-one book + play + track product</li><li>Regional expansion across SE Asia</li></ul></div>
+          <div class="qa t"><span class="ql">Threats</span><span class="qh">watch-outs</span>
+            <ul><li>Well-funded new entrants with modern apps</li><li>Courses building their own direct booking</li><li>Global OTAs moving into golf</li><li>Tourism &amp; economic swings</li></ul></div>
+        </div>
+        <div class="callout"><b>How to read this:</b> strengths a challenger must respect; weaknesses &amp; opportunities a challenger can exploit. The next slides go deeper.</div>
+      </div>
+    </section>
+
+    <!-- A · WHAT THEY HAVE -->
+    <section class="slide" data-title="What they have">
+      <div class="slide-inner">
+        <span class="eyebrow k-eyebrow"><span class="num">00</span> · Analysis · Strengths</span>
+        <h2>What they have — the assets to respect.</h2>
+        <p class="lead">The moat a new entrant has to match, out-flank, or make irrelevant.</p>
+        <div class="grid g3 mt">
+          <div class="card"><span class="tag">Brand</span><h3>Category leadership</h3><p>First-of-its-kind in Asia, now the default "No.1" name for golfers and courses alike.</p></div>
+          <div class="card"><span class="tag">Supply</span><h3>Course network</h3><p>300+ courses across 40 provinces — relationships and integrations built over a decade.</p></div>
+          <div class="card"><span class="tag">Demand</span><h3>Golfer base</h3><p>100K+ registered users, plus organic inbound-tourist traffic from search &amp; reviews.</p></div>
+          <div class="card"><span class="tag">Distribution</span><h3>Multi-channel + AIS</h3><p>App, web, LINE &amp; call centre, amplified by Intouch / AIS telecom reach.</p></div>
+          <div class="card"><span class="tag">Data</span><h3>Pricing &amp; demand data</h3><p>Years of booking history that sharpen discounting and yield decisions.</p></div>
+          <div class="card"><span class="tag">Ecosystem</span><h3>Loyalty &amp; services</h3><p>Golfdigg Family, transfers, travel and GolfdiggTODAY content around the core booking.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- A · WHAT THEY NEED -->
+    <section class="slide" data-title="What they need">
+      <div class="slide-inner">
+        <span class="eyebrow k-eyebrow"><span class="num">00</span> · Analysis · Gaps</span>
+        <h2>What they're missing — the openings.</h2>
+        <div class="split mt-s">
+          <div class="pain">
+            <span class="who">Business-model gaps</span><h3>Where the model strains</h3>
+            <ul>
+              <li><span><b>Thin margins</b> — reliant on a 10–20% commission, with little recurring revenue.</span></li>
+              <li><span><b>Discount dependence</b> — deal-led demand draws price-sensitive, low-loyalty users and squeezes course margins.</span></li>
+              <li><span><b>Single-market</b> — concentrated in Thailand, capping the addressable market.</span></li>
+            </ul>
+          </div>
+          <div class="pain">
+            <span class="who">Product &amp; experience gaps</span><h3>Where the product can be beaten</h3>
+            <ul>
+              <li><span><b>Transactional only</b> — book-and-leave; no play, scoring or social layer to retain golfers.</span></li>
+              <li><span><b>Tourists underserved</b> — limited multilingual, packaged &amp; localized-payment experience.</span></li>
+              <li><span><b>Few fintech &amp; B2B tools</b> — no wallet / BNPL / group-pay, no productized yield SaaS for courses.</span></li>
+            </ul>
+          </div>
+        </div>
+        <div class="callout"><b>Validate before you build:</b> these are analytical hypotheses from public information. Confirm with app-store reviews, golfer interviews and course-operator conversations before committing.</div>
+      </div>
+    </section>
+
+    <!-- A · OPPORTUNITIES -->
+    <section class="slide" data-title="Opportunities">
+      <div class="slide-inner">
+        <span class="eyebrow k-eyebrow"><span class="num">00</span> · Analysis · Opportunities</span>
+        <h2>Where the market is open.</h2>
+        <div class="grid g3 mt">
+          <div class="card"><span class="tag">Tourism</span><h3>Own the visiting golfer</h3><p>700K–1.1M inbound golfers/yr — win them with multilingual booking, bundled packages, transport &amp; local-currency pay.</p></div>
+          <div class="card"><span class="tag">Product</span><h3>All-in-one golf app</h3><p>Book + navigate + score + share in one place — turn a booking tool into a daily habit.</p></div>
+          <div class="card"><span class="tag">Revenue</span><h3>Recurring &amp; fintech</h3><p>Golf-pass subscriptions, memberships, wallet, BNPL &amp; group payments beyond commission.</p></div>
+          <div class="card"><span class="tag">B2B</span><h3>Yield SaaS for courses</h3><p>Sell dynamic-pricing &amp; inventory tools to courses — win supply with better terms and a new revenue line.</p></div>
+          <div class="card"><span class="tag">Geography</span><h3>Regional platform</h3><p>Extend the same model across Vietnam, Indonesia, Malaysia &amp; Japan corridors.</p></div>
+          <div class="card"><span class="tag">Growth</span><h3>Community &amp; content</h3><p>Social feeds, coaching &amp; an equipment marketplace to lower acquisition cost and deepen retention.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- A · WHERE A BETTER PRODUCT WINS -->
+    <section class="slide" data-title="Where a better product wins">
+      <div class="slide-inner">
+        <span class="eyebrow k-eyebrow"><span class="num">00</span> · The opportunity</span>
+        <h2>Where a better product wins.</h2>
+        <p class="lead">The thesis in one line: <span class="thesis">don't out-discount them — out-experience and out-monetize them.</span></p>
+        <div class="scroll-x mt-s">
+          <table class="cmp">
+            <thead><tr><th class="a">Golfdigg today</th><th class="b">A better product</th></tr></thead>
+            <tbody>
+              <tr><td class="a">Thailand-only network</td><td class="b">Multi-country from launch, built for tourist corridors</td></tr>
+              <tr><td class="a">Commission-only, thin margin</td><td class="b">Diversified: subscription + fintech + B2B SaaS</td></tr>
+              <tr><td class="a">Discount-led, low loyalty</td><td class="b">Value, community &amp; rewards that actually retain</td></tr>
+              <tr><td class="a">Transactional booking app</td><td class="b">All-in-one: book, play, track &amp; share</td></tr>
+              <tr><td class="a">Tourists underserved</td><td class="b">Multilingual, bundled, localized payments</td></tr>
+              <tr><td class="a">Little course-side tooling</td><td class="b">Yield SaaS that wins supply with better terms</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout"><b>Next step:</b> share your product vision, budget &amp; target market and I'll turn this into a concrete positioning, feature set and go-to-market plan.</div>
+      </div>
+    </section>
+
     <!-- 15 · VISION -->
     <section class="slide" data-title="Vision">
       <div class="slide-inner">
@@ -712,6 +897,9 @@
   cTot.textContent=N;
 
   function pad(n){return (n<10?'0':'')+n;}
+
+  /* auto-number content slides (skips cover + dividers) so inserts stay correct */
+  (function(){var c=0;slides.forEach(function(s){var el=s.querySelector('.k-eyebrow .num');if(el){c++;el.textContent=pad(c);}});})();
   function render(){
     track.style.setProperty('--i', i);
     cCur.textContent=pad(i+1);
