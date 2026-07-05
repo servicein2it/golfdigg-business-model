@@ -1,0 +1,858 @@
+<style>
+  :root{
+    --ground:#EEF1EA;--surface:#F7F9F3;--surface-2:#E5EADD;--ink:#0F241A;--ink-soft:#46574C;
+    --ink-faint:#7A8A7E;--line:#D2DAC7;--line-soft:#DFE5D6;--fairway:#1F6B47;--pine:#0F3D2B;
+    --brass:#9C7A2C;--brass-bright:#B08A34;--flag:#BB4128;--sand:#E3D5B0;
+
+    --font-display:"Helvetica Neue","Segoe UI",Roboto,Arial,sans-serif;
+    --font-serif:Georgia,"Times New Roman",serif;
+    --font-body:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --font-mono:ui-monospace,"SF Mono","Cascadia Mono",Menlo,Consolas,monospace;
+    --r:14px;
+    --shadow:0 1px 2px rgba(15,61,43,.06),0 12px 30px -18px rgba(15,61,43,.28);
+    --ease:cubic-bezier(.6,.02,.2,1);
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --ground:#0A1C14;--surface:#102820;--surface-2:#16342A;--ink:#EAF1E9;--ink-soft:#A6B8AD;
+      --ink-faint:#71877B;--line:#20402F;--line-soft:#1B3527;--fairway:#3FA173;--pine:#0C2A1D;
+      --brass:#D8B466;--brass-bright:#E4C57E;--flag:#E06B4F;--sand:#B9A876;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 18px 40px -20px rgba(0,0,0,.7);
+    }
+  }
+  :root[data-theme="light"]{
+    --ground:#EEF1EA;--surface:#F7F9F3;--surface-2:#E5EADD;--ink:#0F241A;--ink-soft:#46574C;
+    --ink-faint:#7A8A7E;--line:#D2DAC7;--line-soft:#DFE5D6;--fairway:#1F6B47;--pine:#0F3D2B;
+    --brass:#9C7A2C;--brass-bright:#B08A34;--flag:#BB4128;--sand:#E3D5B0;
+    --shadow:0 1px 2px rgba(15,61,43,.06),0 12px 30px -18px rgba(15,61,43,.28);
+  }
+  :root[data-theme="dark"]{
+    --ground:#0A1C14;--surface:#102820;--surface-2:#16342A;--ink:#EAF1E9;--ink-soft:#A6B8AD;
+    --ink-faint:#71877B;--line:#20402F;--line-soft:#1B3527;--fairway:#3FA173;--pine:#0C2A1D;
+    --brass:#D8B466;--brass-bright:#E4C57E;--flag:#E06B4F;--sand:#B9A876;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 18px 40px -20px rgba(0,0,0,.7);
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--font-body);
+    line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  p{margin:0}
+
+  /* ---------------- typography ---------------- */
+  .eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--brass);display:inline-flex;align-items:center;gap:.7em;font-weight:600}
+  .eyebrow .num{color:var(--ink-faint)}
+  h1,h2,h3{font-family:var(--font-display);font-weight:800;line-height:1.04;letter-spacing:-.02em;
+    text-wrap:balance;margin:0}
+  h3{letter-spacing:-.01em}
+  .thesis{font-family:var(--font-serif);font-style:italic;font-weight:400}
+  .mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+  .illus{font-family:var(--font-mono);font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint)}
+  .pill{display:inline-block;font-family:var(--font-mono);font-size:.62rem;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--brass);border:1px solid var(--brass);border-radius:999px;
+    padding:2px 9px;vertical-align:middle}
+
+  /* ---------------- deck scaffolding ---------------- */
+  .deck{position:relative}
+  .slide{border-top:1px solid var(--line-soft)}
+  .slide-inner{max-width:1060px;width:100%;margin:0 auto;
+    padding:clamp(48px,7vw,80px) clamp(22px,5vw,72px)}
+  .chrome,.sidebtn,.hint{display:none}
+
+  /* slide-mode (JS on) */
+  html.deck-on,html.deck-on body{height:100%;overflow:hidden}
+  html.deck-on .deck{position:fixed;inset:0;overflow:hidden}
+  html.deck-on .track{display:flex;height:100%;width:100%;
+    transform:translateX(calc(var(--i,0) * -100%));transition:transform .55s var(--ease);will-change:transform}
+  html.deck-on .slide{flex:0 0 100%;width:100%;height:100%;overflow-y:auto;overflow-x:hidden;border-top:0}
+  html.deck-on .slide-inner{min-height:100%;display:flex;flex-direction:column;justify-content:center;
+    max-width:1080px;padding:clamp(52px,7vh,84px) clamp(22px,5vw,72px) clamp(80px,9vh,104px)}
+  html.deck-on .chrome{display:flex}
+  html.deck-on .sidebtn{display:grid}
+  @media (prefers-reduced-motion:reduce){html.deck-on .track{transition:none}}
+
+  /* slide entrance (only in deck mode) */
+  html.deck-on .slide .slide-inner{opacity:0;transform:translateY(16px)}
+  html.deck-on .slide.active .slide-inner{opacity:1;transform:none;
+    transition:opacity .5s ease .08s,transform .55s var(--ease) .08s}
+  @media (prefers-reduced-motion:reduce){
+    html.deck-on .slide .slide-inner{opacity:1;transform:none}
+    html.deck-on .slide.active .slide-inner{transition:none}
+  }
+
+  /* slide-scoped type scale (uses vh so it shrinks on short viewports) */
+  .slide .k-eyebrow{margin-bottom:clamp(14px,2.4vh,26px);display:block}
+  .slide h2{font-size:clamp(1.7rem,1.6vh + 2vw,3.05rem);margin:0 0 clamp(12px,2vh,20px)}
+  .slide .lead{font-size:clamp(1rem,.7vh + .6vw,1.24rem);color:var(--ink-soft);max-width:60ch;line-height:1.5}
+  .slide h3{font-size:clamp(1.02rem,.5vh + .7vw,1.32rem)}
+
+  /* ---------------- cover ---------------- */
+  .slide--cover{background:var(--pine);color:#EAF1E9;position:relative;overflow:hidden}
+  .cover-canvas{position:absolute;inset:0;width:100%;height:100%;z-index:0;display:block}
+  .slide--cover .slide-inner{position:relative;z-index:2;justify-content:center}
+  .slide--cover .eyebrow{color:var(--brass-bright)}
+  .cover-title{font-size:clamp(2.6rem,3vh + 5vw,6rem);color:#F3F7F1;letter-spacing:-.03em;
+    margin:clamp(16px,3vh,30px) 0 0;max-width:15ch}
+  .cover-title .accent{color:var(--brass-bright)}
+  .cover-sub{font-family:var(--font-serif);font-style:italic;color:#C9D6CC;
+    font-size:clamp(1.05rem,1vh + .9vw,1.55rem);margin:clamp(18px,3vh,30px) 0 0;max-width:46ch;line-height:1.5}
+  .cover-chips{display:flex;flex-wrap:wrap;gap:12px;margin-top:clamp(26px,4vh,42px)}
+  .chip{display:flex;flex-direction:column;gap:3px;padding:13px 18px;border-radius:12px;
+    background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.11);min-width:118px}
+  .chip .k{font-family:var(--font-mono);font-size:clamp(1.3rem,2.2vw,1.7rem);font-weight:600;
+    color:var(--brass-bright);line-height:1}
+  .chip .l{font-size:.68rem;letter-spacing:.05em;text-transform:uppercase;color:#9FB2A4}
+  .cover-foot{position:absolute;left:clamp(22px,5vw,72px);bottom:clamp(20px,4vh,34px);z-index:2;
+    font-family:var(--font-mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:#7E9385}
+
+  /* ---------------- generic bits ---------------- */
+  .grid{display:grid;gap:clamp(12px,1.6vh,18px)}
+  .g2{grid-template-columns:repeat(2,1fr)}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  @media (max-width:860px){.g3{grid-template-columns:1fr 1fr}}
+  @media (max-width:560px){.g2,.g3{grid-template-columns:1fr}}
+  .mt{margin-top:clamp(22px,3.4vh,40px)}
+  .mt-s{margin-top:clamp(12px,2vh,20px)}
+
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+    padding:clamp(16px,2.2vh,22px);box-shadow:var(--shadow)}
+  .card .tag{font-family:var(--font-mono);font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--brass);display:block;margin-bottom:9px}
+  .card h3{margin-bottom:6px}
+  .card p{color:var(--ink-soft);font-size:.92rem}
+
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:clamp(14px,2vh,20px)}
+  @media (max-width:760px){.split{grid-template-columns:1fr}}
+  .pain{border:1px solid var(--line);border-radius:var(--r);padding:clamp(18px,2.6vh,26px);background:var(--surface)}
+  .pain .who{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--flag);margin-bottom:6px;display:block}
+  .pain.dem .who{color:var(--fairway)}
+  .pain ul{margin:12px 0 0;padding:0;list-style:none}
+  .pain li{display:flex;gap:11px;padding:9px 0;border-top:1px solid var(--line-soft);color:var(--ink-soft);font-size:.92rem}
+  .pain li:first-child{border-top:0}
+  .pain li b{color:var(--ink);font-weight:600}
+  .pain li::before{content:"";flex:0 0 7px;height:7px;margin-top:7px;border-radius:2px;
+    background:var(--flag);transform:rotate(45deg)}
+  .pain.dem li::before{background:var(--fairway)}
+
+  .bigstat{font-family:var(--font-display);font-weight:800;font-size:clamp(2.6rem,7vw,4.6rem);
+    color:var(--flag);letter-spacing:-.03em;line-height:1}
+  .bigstat-cap{color:var(--ink-soft);margin-top:8px;font-size:1rem;max-width:56ch}
+
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(12px,1.6vh,16px)}
+  @media (max-width:760px){.steps{grid-template-columns:1fr}}
+  .step{padding:clamp(18px,2.6vh,24px);border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+  .step .n{font-family:var(--font-mono);font-size:.74rem;color:var(--brass);letter-spacing:.1em}
+  .step h3{margin:10px 0 7px}
+  .step p{color:var(--ink-soft);font-size:.9rem}
+
+  /* marketplace */
+  .market{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;align-items:stretch;
+    border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--surface)}
+  .mk-col{padding:clamp(16px,2.4vh,24px);display:flex;flex-direction:column;gap:7px}
+  .mk-col.core{background:var(--pine);color:#EAF1E9}
+  .mk-col .role{font-family:var(--font-mono);font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:var(--brass)}
+  .mk-col.core .role{color:var(--brass-bright)}
+  .mk-col h3{font-size:1.1rem}
+  .mk-col.core h3{color:#F3F7F1}
+  .mk-col p{font-size:.86rem;color:var(--ink-soft)}
+  .mk-col.core p{color:#BFD0C4}
+  .mk-flow{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:6px;
+    padding:8px 6px;min-width:112px;background:var(--surface-2)}
+  .mk-flow .up{color:var(--fairway)}.mk-flow .dn{color:var(--brass)}
+  .mk-flow .up,.mk-flow .dn{font-family:var(--font-mono);font-size:.64rem;text-align:center;line-height:1.3}
+  .mk-flow .ar{color:var(--ink-faint)}
+  @media (max-width:820px){.market{grid-template-columns:1fr}.mk-flow{flex-direction:row;gap:14px}.mk-flow .ar{transform:rotate(90deg)}}
+
+  /* revenue bars */
+  .rev-list{display:flex;flex-direction:column;gap:clamp(10px,1.6vh,15px)}
+  .rev-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:7px}
+  .rev-top .name{font-weight:600;font-size:.96rem}
+  .rev-top .name span{color:var(--ink-faint);font-weight:400;font-size:.8rem;display:block;margin-top:1px}
+  .rev-top .pct{font-family:var(--font-mono);font-variant-numeric:tabular-nums;color:var(--brass);font-weight:600}
+  .bar{height:11px;border-radius:999px;background:var(--surface-2);overflow:hidden}
+  .bar>i{display:block;height:100%;border-radius:999px;width:var(--w,10%);
+    background:linear-gradient(90deg,var(--fairway),var(--brass-bright));transition:width 1s var(--ease)}
+  .rev.r2 .bar>i{background:var(--fairway)}
+
+  /* scorecard table */
+  .scroll-x{overflow-x:auto;border-radius:var(--r);border:1px solid var(--line);background:var(--surface)}
+  table.score{width:100%;border-collapse:collapse;min-width:500px;font-size:.94rem}
+  table.score caption{text-align:left;padding:15px 20px 2px;font-family:var(--font-mono);font-size:.68rem;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--brass)}
+  table.score th,table.score td{padding:11px 20px;text-align:left;border-top:1px solid var(--line-soft)}
+  table.score thead th{border-top:0;font-family:var(--font-mono);font-size:.66rem;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--ink-faint)}
+  table.score td.v,table.score th.v{text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums;color:var(--ink)}
+  table.score td.hole{font-family:var(--font-mono);color:var(--brass);width:52px}
+  table.score tr.total td{border-top:2px solid var(--brass);font-weight:700}
+  table.score tr.total td.v{color:var(--fairway)}
+
+  /* funnel */
+  .funnel{display:flex;flex-direction:column;gap:10px}
+  .tier{border-radius:12px;padding:clamp(13px,2vh,20px) clamp(16px,2.4vw,24px);color:#EAF1E9;margin:0 auto;width:100%}
+  .tier .t{font-family:var(--font-mono);font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;opacity:.85}
+  .tier .v{font-family:var(--font-display);font-weight:800;font-size:clamp(1.05rem,1vh + 1vw,1.6rem);margin:3px 0}
+  .tier .d{font-size:.82rem;opacity:.9}
+  .tier.tam{background:var(--pine)}
+  .tier.sam{background:var(--fairway);width:84%}
+  .tier.som{background:var(--brass);width:64%;color:#241a05}.tier.som .t{opacity:.72}
+  @media (max-width:640px){.tier.sam,.tier.som{width:100%}}
+
+  /* tiles */
+  .tiles{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);border-radius:var(--r);
+    overflow:hidden;background:var(--surface)}
+  @media (max-width:760px){.tiles{grid-template-columns:1fr 1fr}}
+  .tile{padding:clamp(16px,2.4vh,26px) clamp(16px,2vw,22px);border-right:1px solid var(--line-soft);border-top:1px solid var(--line-soft)}
+  .tile .k{font-family:var(--font-display);font-weight:800;font-size:clamp(1.7rem,3vw,2.5rem);color:var(--fairway);line-height:1;letter-spacing:-.02em}
+  .tile .l{margin-top:7px;color:var(--ink-soft);font-size:.86rem}.tile .l b{color:var(--ink)}
+
+  /* flywheel + moat */
+  .fly{display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(11px,1.6vh,14px)}
+  @media (max-width:820px){.fly{grid-template-columns:1fr 1fr}}
+  @media (max-width:460px){.fly{grid-template-columns:1fr}}
+  .node{border:1px dashed var(--brass);border-radius:var(--r);padding:clamp(15px,2.2vh,20px);background:var(--surface)}
+  .node .s{font-family:var(--font-mono);font-size:.68rem;color:var(--brass);letter-spacing:.1em}
+  .node p{margin-top:8px;font-size:.88rem;color:var(--ink-soft)}.node p b{color:var(--ink)}
+  .moat{display:grid;grid-template-columns:1fr 1fr;gap:clamp(11px,1.6vh,14px)}
+  @media (max-width:760px){.moat{grid-template-columns:1fr}}
+  .m{display:flex;gap:13px;padding:clamp(14px,2vh,20px);border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+  .m .mi{flex:0 0 28px;height:28px;color:var(--fairway)}
+  .m h3{font-size:1rem;margin-bottom:3px}.m p{font-size:.86rem;color:var(--ink-soft)}
+
+  /* funding (dark slide) */
+  .slide--dark{background:var(--pine);color:#EAF1E9}
+  .slide--dark .eyebrow{color:var(--brass-bright)}
+  .slide--dark h2{color:#F3F7F1}.slide--dark .lead{color:#C4D3C8}
+  .fund-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(24px,4vw,40px);align-items:center}
+  @media (max-width:820px){.fund-grid{grid-template-columns:1fr}}
+  .fund-amt{font-family:var(--font-display);font-weight:800;font-size:clamp(3rem,10vw,6rem);
+    color:var(--brass-bright);letter-spacing:-.03em;line-height:.95}
+  .fund-amt small{display:block;font-size:.86rem;font-weight:500;color:#9FB2A4;font-family:var(--font-body);margin-top:14px;line-height:1.5;max-width:44ch}
+  .ff{padding:13px 0;border-top:1px solid rgba(255,255,255,.13);display:flex;justify-content:space-between;gap:16px;align-items:baseline}
+  .ff:first-child{border-top:0}
+  .ff .fk{color:#9FB2A4;font-size:.82rem}.ff .fv{color:#EAF1E9;font-weight:600;text-align:right;font-size:.9rem}
+
+  /* team */
+  .team-lead{display:flex;gap:18px;align-items:center;padding:clamp(18px,2.6vh,24px);
+    border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+  .avatar{flex:0 0 60px;height:60px;border-radius:50%;background:radial-gradient(circle at 35% 30%,var(--fairway),var(--pine));
+    color:#fff;display:grid;place-items:center;font-family:var(--font-display);font-weight:800;font-size:1.4rem}
+  .team-lead .who{font-weight:700;font-size:1.08rem}
+  .team-lead .role{color:var(--brass);font-family:var(--font-mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;margin-top:2px}
+  .team-lead p{margin-top:7px;color:var(--ink-soft);font-size:.9rem}
+  .roles{display:grid;grid-template-columns:repeat(4,1fr);gap:11px}
+  @media (max-width:760px){.roles{grid-template-columns:1fr 1fr}}
+  .roles .r{border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--surface);text-align:center}
+  .roles .r .rr{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.08em;color:var(--brass);text-transform:uppercase}
+  .roles .r .rd{font-size:.8rem;color:var(--ink-soft);margin-top:5px}
+
+  /* takeaways (vision) */
+  .takeaways{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(11px,1.6vh,14px)}
+  @media (max-width:760px){.takeaways{grid-template-columns:1fr}}
+  .ta{border:1px solid var(--line);border-radius:var(--r);padding:clamp(16px,2.2vh,22px);background:var(--surface)}
+  .ta .n{font-family:var(--font-mono);color:var(--brass);font-size:.72rem;letter-spacing:.08em}
+  .ta h3{margin:8px 0 5px;font-size:1.02rem}.ta p{font-size:.86rem;color:var(--ink-soft)}
+
+  /* thank-you / sources */
+  .src{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:14px}
+  .src a{color:var(--brass-bright);text-decoration:none;font-size:.82rem}
+  .src a:hover{text-decoration:underline}
+  .disc{border-left:3px solid var(--brass-bright);padding:4px 0 4px 15px;margin:16px 0 0;max-width:82ch;
+    color:#C4D3C8;font-size:.86rem;line-height:1.55}
+  .disc b{color:#EAF1E9}
+
+  /* ---------------- CHROME (deck controls) ---------------- */
+  .chrome{position:fixed;left:0;right:0;bottom:0;z-index:60;align-items:center;justify-content:space-between;
+    gap:12px;padding:10px clamp(14px,3vw,26px);
+    background:color-mix(in srgb,var(--ground) 80%,transparent);backdrop-filter:blur(12px) saturate(1.3);
+    border-top:1px solid var(--line-soft)}
+  .chrome .left{display:flex;align-items:center;gap:9px;min-width:0}
+  .chrome .brand{font-family:var(--font-display);font-weight:800;letter-spacing:-.02em;font-size:.92rem;color:var(--ink);white-space:nowrap}
+  .chrome .brand b{color:var(--fairway)}
+  .chrome .brand .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--brass-bright);margin-right:6px;vertical-align:middle}
+  .chrome .deckname{color:var(--ink-faint);font-size:.78rem;white-space:nowrap}
+  @media (max-width:620px){.chrome .deckname{display:none}}
+  .center{display:flex;align-items:center;gap:6px}
+  .counter{font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:.86rem;color:var(--ink-soft);
+    min-width:74px;text-align:center;letter-spacing:.04em}
+  .counter b{color:var(--fairway)}
+  .right{display:flex;align-items:center;gap:6px}
+  .btn{appearance:none;border:1px solid var(--line);background:var(--surface);color:var(--ink-soft);
+    width:38px;height:38px;border-radius:10px;cursor:pointer;display:grid;place-items:center;font-size:1rem;
+    transition:border-color .15s,color .15s,background .15s}
+  .btn:hover{border-color:var(--brass);color:var(--ink)}
+  .btn:disabled{opacity:.32;cursor:default;border-color:var(--line)}
+  .btn svg{width:18px;height:18px}
+  .btn.tool{width:auto;padding:0 12px;gap:7px;font-size:.8rem}
+
+  /* progress bar */
+  .progress{position:fixed;top:0;left:0;right:0;height:3px;z-index:61;background:transparent}
+  .progress>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--fairway),var(--brass-bright));
+    transition:width .5s var(--ease)}
+
+  /* side arrows */
+  .sidebtn{position:fixed;top:50%;transform:translateY(-50%);z-index:55;width:46px;height:46px;
+    place-items:center;border-radius:50%;border:1px solid var(--line);cursor:pointer;
+    background:color-mix(in srgb,var(--ground) 72%,transparent);backdrop-filter:blur(6px);
+    color:var(--ink-soft);transition:opacity .2s,border-color .15s,color .15s;opacity:.55}
+  .sidebtn:hover{opacity:1;border-color:var(--brass);color:var(--ink)}
+  .sidebtn.prev{left:14px}.sidebtn.next{right:14px}
+  .sidebtn svg{width:20px;height:20px}
+  .sidebtn:disabled{opacity:0;pointer-events:none}
+  @media (max-width:900px){.sidebtn{display:none !important}}
+
+  /* overview overlay */
+  .overview{position:fixed;inset:0;z-index:80;background:color-mix(in srgb,var(--ground) 94%,transparent);
+    backdrop-filter:blur(6px);display:none;flex-direction:column;padding:clamp(18px,4vw,44px)}
+  .overview.open{display:flex}
+  .ov-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+  .ov-head h4{font-family:var(--font-mono);font-size:.74rem;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);margin:0}
+  .ov-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;overflow-y:auto;padding-bottom:20px}
+  .ov-card{text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:12px;
+    padding:15px 16px;cursor:pointer;color:var(--ink);font:inherit;transition:border-color .15s,transform .12s}
+  .ov-card:hover{border-color:var(--brass);transform:translateY(-2px)}
+  .ov-card.cur{border-color:var(--fairway);box-shadow:inset 0 0 0 1px var(--fairway)}
+  .ov-card .oi{font-family:var(--font-mono);font-size:.72rem;color:var(--brass);letter-spacing:.08em}
+  .ov-card .ot{margin-top:6px;font-weight:600;font-size:.94rem}
+
+  /* keyboard hint */
+  .hint{position:fixed;bottom:64px;left:50%;transform:translateX(-50%);z-index:54;
+    font-family:var(--font-mono);font-size:.7rem;letter-spacing:.06em;color:var(--ink-faint);
+    background:color-mix(in srgb,var(--ground) 80%,transparent);border:1px solid var(--line-soft);
+    padding:7px 14px;border-radius:999px;transition:opacity .6s}
+  html.deck-on .hint{display:block}
+  .hint.gone{opacity:0;pointer-events:none}
+
+  :focus-visible{outline:2px solid var(--brass-bright);outline-offset:2px;border-radius:6px}
+  .kbd{font-family:var(--font-mono);border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;
+    padding:1px 6px;font-size:.9em;color:var(--ink-soft)}
+</style>
+
+<div class="progress" aria-hidden="true"><i id="prog"></i></div>
+
+<div class="deck" id="deck">
+  <div class="track" id="track">
+
+    <!-- 0 · COVER -->
+    <section class="slide slide--cover" data-title="Cover">
+      <canvas class="cover-canvas" id="greenmap" aria-hidden="true"></canvas>
+      <div class="slide-inner">
+        <span class="eyebrow"><span class="num">▹</span> Thailand's No.1 Golf Booking Platform</span>
+        <h1 class="cover-title">Turning empty tee times into a <span class="accent">marketplace.</span></h1>
+        <p class="cover-sub">Golfdigg lets golfers book real-time tee times at 300+ courses — and lets courses sell the ~40% of slots that would otherwise vanish unsold.</p>
+        <div class="cover-chips">
+          <div class="chip"><span class="k">300+</span><span class="l">Golf courses</span></div>
+          <div class="chip"><span class="k">100K+</span><span class="l">Golfers</span></div>
+          <div class="chip"><span class="k">40</span><span class="l">Provinces</span></div>
+          <div class="chip"><span class="k">80%</span><span class="l">Peak saving</span></div>
+        </div>
+      </div>
+      <div class="cover-foot">Business Model Presentation · Compiled 2026</div>
+    </section>
+
+    <!-- 1 · WHAT IT IS -->
+    <section class="slide" data-title="What Golfdigg is">
+      <div class="slide-inner">
+        <span class="eyebrow k-eyebrow"><span class="num">01</span> · What Golfdigg is</span>
+        <h2>A two-sided marketplace for perishable tee times.</h2>
+        <p class="lead">Courses carry high fixed costs and inventory that expires the moment a tee time passes. Golfdigg aggregates that inventory, prices it dynamically, and puts it one tap away — then takes a commission on every round.</p>
+        <div class="grid g3 mt">
+          <div class="card"><span class="tag">The category</span><h3>On-demand booking</h3><p>An OTA-style aggregator for golf: browse, compare, book and pay in seconds instead of phoning the pro shop.</p></div>
+          <div class="card"><span class="tag">The mechanism</span><h3>Yield management</h3><p>Discount unsold and off-peak slots 30–80% to fill capacity — the airline/hotel playbook, applied to fairways.</p></div>
+          <div class="card"><span class="tag">The footprint</span><h3>Nationwide, multi-channel</h3><p>300+ courses across 40 provinces via iOS, Android, web, LINE and a 24-hour call centre.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 · PROBLEM -->
+    <section class="slide" data-title="The problem">
+      <div class="slide-inner">
+        <span class="eyebrow k-eyebrow"><span class="num">02</span> · The problem</span>
+        <h2>Empty fairways are a billion-baht leak.</h2>
+        <div class="mt-s" style="margin-bottom:clamp(18px,3vh,30px)">
+          <div class="bigstat">~40%</div>
+          <div class="bigstat-cap">of tee times across Thailand's ~250 courses go unsold each year — an estimated <b>฿1&nbsp;billion+</b> in revenue that simply evaporates. <span class="illus">Industry estimate</span></div>
+        </div>
+        <div class="split">
+          <div class="pain">
+            <span class="who">Supply · Golf courses</span><h3>Capacity that expires</h3>
+            <ul>
+              <li><span><b>High fixed cost, zero salvage</b> — grounds &amp; staff are paid whether the slot sells or not.</span></li>
+              <li><span><b>Weak weekday &amp; off-peak demand</b> while weekends overflow.</span></li>
+              <li><span><b>No dynamic pricing</b> tools to clear last-minute inventory.</span></li>
+            </ul>
+          </div>
+          <div class="pain dem">
+            <span class="who">Demand · Golfers</span><h3>Booking is friction</h3>
+            <ul>
+              <li><span><b>Phone-and-hope</b> — calling each pro shop with no live availability.</span></li>
+              <li><span><b>Opaque, inconsistent pricing</b> with no way to compare.</span></li>
+              <li><span><b>No last-minute channel</b> for the ~50% who decide after work.</span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 · HOW IT WORKS -->
+    <section class="slide" data-title="How it works">
+      <div class="slide-inner">
+        <span class="eyebrow k-eyebrow"><span class="num">03</span> · The solution</span>
+        <h2>Book a round in three taps.</h2>
+        <p class="lead">Golfdigg matches a golfer's intent to a course's spare capacity in real time, handles payment, and issues an instant confirmation.</p>
+        <div class="steps mt">
+          <div class="step"><span class="n">STEP 01</span><h3>Discover</h3><p>Browse live availability and deals by date, region or course — including same-day "Golf Tomorrow" offers up to 80% off.</p></div>
+          <div class="step"><span class="n">STEP 02</span><h3>Book &amp; pay</h3><p>Confirm a tee time and pay in-app in seconds. No calls, no haggling, no hidden fees.</p></div>
+          <div class="step"><span class="n">STEP 03</span><h3>Play</h3><p>Show the confirmation at the course and tee off. Earn Golfdigg Family points on every round.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 · PRODUCT -->
+    <section class="slide" data-title="Product">
+      <div class="slide-inner">
+        <span class="eyebrow k-eyebrow"><span class="num">04</span> · Product</span>
+        <h2>A booking engine with a lifestyle stack on top.</h2>
+        <div class="grid g3 mt">
+          <div class="card"><span class="tag">Core</span><h3>Real-time booking</h3><p>Reserve tee times from today up to 1–180 days ahead, instant confirmation, 300+ courses.</p></div>
+          <div class="card"><span class="tag">Yield</span><h3>Last-minute deals</h3><p>Discounted &amp; flash "Golf Tomorrow" slots clear empty capacity — the core value hook.</p></div>
+          <div class="card"><span class="tag">Reach</span><h3>Omni-channel</h3><p>iOS, Android, web, LINE official account &amp; a 24-hour hotline.</p></div>
+          <div class="card"><span class="tag">Retention</span><h3>Golfdigg Family</h3><p>Points, tiers &amp; privileges driving repeat booking and higher lifetime value.</p></div>
+          <div class="card"><span class="tag">Ancillary</span><h3>Transfers &amp; concierge</h3><p>Golf transfers, bag delivery &amp; travel packages — extra margin per golfer.</p></div>
+          <div class="card"><span class="tag">Content</span><h3>GolfdiggTODAY</h3><p>Reviews &amp; editorial that pull in demand organically and monetise via placements.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 · BUSINESS MODEL -->
+    <section class="slide" data-title="Business model">
+      <div class="slide-inner">
+        <span class="eyebrow k-eyebrow"><span class="num">05</span> · The business model</span>
+        <h2>Asset-light platform, both sides win.</h2>
+        <div class="market mt-s" role="group" aria-label="Two-sided marketplace">
+          <div class="mk-col"><span class="role">Demand</span><h3>Golfers</h3><p>Residents, expats &amp; tourists seeking convenient, better-priced tee times.</p></div>
+          <div class="mk-flow"><span class="up">booking + payment ▸</span><span class="ar">⇄</span><span class="dn">◂ deals + confirmation</span></div>
+          <div class="mk-col core"><span class="role">Platform</span><h3>Golfdigg</h3><p>Aggregation, pricing, payments &amp; trust. Takes a commission on every round.</p></div>
+          <div class="mk-flow"><span class="up">filled tee times ▸</span><span class="ar">⇄</span><span class="dn">◂ inventory + rates</span></div>
+          <div class="mk-col"><span class="role">Supply</span><h3>Courses</h3><p>300+ partners monetising spare capacity through a channel they control.</p></div>
+        </div>
+        <div class="grid g3 mt-s">
+          <div class="card"><h3>Network effects</h3><p>More golfers make Golfdigg must-list for courses; more courses &amp; deals attract more golfers.</p></div>
+          <div class="card"><h3>Perishable economics</h3><p>Unsold slots have zero salvage value, so courses discount willingly — the take is near-pure upside.</p></div>
+          <div class="card"><h3>Capital efficiency</h3><p>No courses, no equipment, no ground staff. Growth is software, partnerships &amp; marketing.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6 · REVENUE -->
+    <section class="slide" data-title="Revenue model">
+      <div class="slide-inner">
+        <span class="eyebrow k-eyebrow"><span class="num">06</span> · Revenue model</span>
+        <h2>Commission first, then everything around the round.</h2>
+        <div class="split mt" style="align-items:start">
+          <div>
+            <div class="rev-list" id="revBars">
+              <div class="rev"><div class="rev-top"><span class="name">Booking commission<span>10–20% take rate per tee time</span></span><span class="pct">~70%</span></div><div class="bar"><i style="--w:70%"></i></div></div>
+              <div class="rev r2"><div class="rev-top"><span class="name">Ancillary services<span>Transfers, bag, travel, lessons</span></span><span class="pct">~15%</span></div><div class="bar"><i style="--w:15%"></i></div></div>
+              <div class="rev r2"><div class="rev-top"><span class="name">Membership &amp; loyalty<span>Golfdigg Family upsell</span></span><span class="pct">~7%</span></div><div class="bar"><i style="--w:7%"></i></div></div>
+              <div class="rev r2"><div class="rev-top"><span class="name">Media &amp; placement<span>Featured courses, ads</span></span><span class="pct">~5%</span></div><div class="bar"><i style="--w:5%"></i></div></div>
+              <div class="rev r2"><div class="rev-top"><span class="name">B2B &amp; tourism<span>Corporate events, operators</span></span><span class="pct">~3%</span></div><div class="bar"><i style="--w:3%"></i></div></div>
+            </div>
+            <p class="illus mt-s">Illustrative revenue mix — models the structure, not reported financials.</p>
+          </div>
+          <div class="grid">
+            <div class="card"><span class="tag">Primary · transactional</span><h3>Booking commission</h3><p>A clip on every tee time sold. Scales with rounds; margin improves with volume &amp; better terms.</p></div>
+            <div class="card"><span class="tag">Recurring · retention</span><h3>Loyalty &amp; membership</h3><p>Points &amp; tiers turn one-off bookers into repeat customers and premium tiers.</p></div>
+            <div class="card"><span class="tag">Attach · margin</span><h3>Ancillary &amp; media</h3><p>Transfers, travel &amp; featured placement raise revenue per golfer at low marginal cost.</p></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7 · UNIT ECONOMICS -->
+    <section class="slide" data-title="Unit economics">
+      <div class="slide-inner">
+        <span class="eyebrow k-eyebrow"><span class="num">07</span> · Unit economics</span>
+        <h2>The scorecard for one round. <span class="pill">Illustrative</span></h2>
+        <div class="scroll-x mt-s">
+          <table class="score">
+            <caption>Per-booking economics · single golfer · illustrative</caption>
+            <thead><tr><th class="hole">Hole</th><th>Line item</th><th class="v">Amount (฿)</th></tr></thead>
+            <tbody>
+              <tr><td class="hole">1</td><td>Green fee booked (discounted rate)</td><td class="v">1,000</td></tr>
+              <tr><td class="hole">2</td><td>Golfdigg take rate (≈15%, range 10–20%)</td><td class="v">15%</td></tr>
+              <tr><td class="hole">3</td><td>Gross booking commission</td><td class="v">150</td></tr>
+              <tr><td class="hole">4</td><td>Ancillary attach (transfer / bag / travel)</td><td class="v">+30</td></tr>
+              <tr><td class="hole">5</td><td>Payment &amp; servicing cost</td><td class="v">−25</td></tr>
+              <tr class="total"><td class="hole">IN</td><td>Contribution per round</td><td class="v">≈ 155</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="grid g3 mt-s">
+          <div class="card"><h3>Volume is the lever</h3><p>Small per round — the model wins on <b>frequency &amp; scale</b> across a nationwide network.</p></div>
+          <div class="card"><h3>Zero inventory risk</h3><p>Golfdigg never buys a slot; unsold means only forgone commission, no COGS.</p></div>
+          <div class="card"><h3>Attach lifts the average</h3><p>Each transfer, package or membership raises revenue per golfer at minimal cost.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8 · MARKET -->
+    <section class="slide" data-title="Market">
+      <div class="slide-inner">
+        <span class="eyebrow k-eyebrow"><span class="num">08</span> · Market opportunity</span>
+        <h2>A golf economy built for this model.</h2>
+        <div class="funnel mt-s">
+          <div class="tier tam"><div class="t">TAM · Total golf economy</div><div class="v">~250+ courses · 500K resident golfers · 700K–1.1M inbound tourists/yr</div><div class="d">Total golf spend — green fees, travel, transfers — with ฿1&nbsp;billion+ of unsold tee-time value alone.</div></div>
+          <div class="tier sam"><div class="t">SAM · Online-bookable tee times</div><div class="v">Digitisable green-fee GMV across partner courses</div><div class="d">Rounds that can be booked &amp; paid online — the direct target for a marketplace take rate.</div></div>
+          <div class="tier som"><div class="t">SOM · Golfdigg today</div><div class="v">300+ courses · 100K+ golfers · 40 provinces</div><div class="d">The captured network now — beachhead for deeper penetration &amp; regional expansion.</div></div>
+        </div>
+        <div class="grid g3 mt-s">
+          <div class="card"><span class="tag">Tailwind</span><h3>Golf tourism boom</h3><p>Asia-Pacific golf tourism growing double-digit CAGR; Thailand a top destination for JP/KR/EU travellers.</p></div>
+          <div class="card"><span class="tag">Behaviour</span><h3>Mobile &amp; last-minute</h3><p>~50% of golfers decide after work and book on mobile — exactly the demand flash deals capture.</p></div>
+          <div class="card"><span class="tag">Expansion</span><h3>Regional runway</h3><p>The same perishable-inventory model extends across Southeast Asia &amp; adjacent services.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 9 · CUSTOMERS -->
+    <section class="slide" data-title="Customers">
+      <div class="slide-inner">
+        <span class="eyebrow k-eyebrow"><span class="num">09</span> · Customer segments</span>
+        <h2>Two customers, one transaction.</h2>
+        <div class="split mt">
+          <div class="pain dem">
+            <span class="who">Demand · Golfers</span><h3>Who books</h3>
+            <ul>
+              <li><span><b>Value-seeking locals</b> — after-work &amp; weekday players chasing the best deal (~90% via app).</span></li>
+              <li><span><b>Expats</b> wanting frictionless English booking.</span></li>
+              <li><span><b>Inbound tourists</b> — Japanese, Korean &amp; European golfers (~10%, high-spend).</span></li>
+            </ul>
+          </div>
+          <div class="pain dem">
+            <span class="who">Supply · Courses</span><h3>Who lists</h3>
+            <ul>
+              <li><span><b>Courses with idle capacity</b> — weekday &amp; off-peak slots to clear.</span></li>
+              <li><span><b>Resort &amp; destination courses</b> targeting inbound tourists.</span></li>
+              <li><span><b>Operators wanting a controlled discount channel</b> that protects the rate card.</span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 10 · TRACTION -->
+    <section class="slide" data-title="Traction">
+      <div class="slide-inner">
+        <span class="eyebrow k-eyebrow"><span class="num">10</span> · Traction</span>
+        <h2>From one frustrated golfer to a national network.</h2>
+        <p class="lead">Founded by a golfer tired of phoning pro shops — scaled from a handful of Bangkok courses to Thailand's self-described No.1 golf booking service.</p>
+        <div class="tiles mt">
+          <div class="tile"><div class="k">300+</div><div class="l"><b>Golf courses</b> on the network</div></div>
+          <div class="tile"><div class="k">40</div><div class="l"><b>Provinces</b> nationwide</div></div>
+          <div class="tile"><div class="k">100K+</div><div class="l"><b>Registered golfers</b></div></div>
+          <div class="tile"><div class="k">4</div><div class="l"><b>Channels</b> — app, web, LINE, hotline</div></div>
+          <div class="tile"><div class="k">180</div><div class="l"><b>Days</b> booking window</div></div>
+          <div class="tile"><div class="k">2014</div><div class="l">Winner, <b>AIS "The Start-up"</b></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 11 · FLYWHEEL -->
+    <section class="slide" data-title="Growth flywheel">
+      <div class="slide-inner">
+        <span class="eyebrow k-eyebrow"><span class="num">11</span> · Growth flywheel</span>
+        <h2>Every filled slot spins the wheel.</h2>
+        <div class="fly mt">
+          <div class="node"><span class="s">▸ 01</span><p><b>More golfers</b> join for the best deals &amp; convenience.</p></div>
+          <div class="node"><span class="s">▸ 02</span><p><b>More demand</b> makes Golfdigg essential for courses.</p></div>
+          <div class="node"><span class="s">▸ 03</span><p><b>More inventory</b> means better, wider deals.</p></div>
+          <div class="node"><span class="s">▸ 04</span><p><b>Better deals</b> attract even more golfers — loop repeats.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 12 · MOAT -->
+    <section class="slide" data-title="Competitive moat">
+      <div class="slide-inner">
+        <span class="eyebrow k-eyebrow"><span class="num">12</span> · Competitive moat</span>
+        <h2>Why it's hard to copy.</h2>
+        <div class="moat mt">
+          <div class="m"><svg class="mi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 2v6l7 3-7 3v8" stroke-linecap="round" stroke-linejoin="round"/></svg><div><h3>First-mover &amp; brand</h3><p>A first-of-its-kind service in Asia, now positioned as Thailand's No.1 — the default name.</p></div></div>
+          <div class="m"><svg class="mi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="6" cy="7" r="3"/><circle cx="18" cy="17" r="3"/><path d="M6 10v4a3 3 0 0 0 3 3h6" stroke-linecap="round"/></svg><div><h3>Two-sided network</h3><p>300+ courses and 100K+ golfers reinforce each other — a cold-start any entrant must solve twice.</p></div></div>
+          <div class="m"><svg class="mi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" stroke-linecap="round"/></svg><div><h3>Pricing data</h3><p>Years of booking data sharpen dynamic pricing a newcomer can't match.</p></div></div>
+          <div class="m"><svg class="mi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M8 15h4" stroke-linecap="round"/></svg><div><h3>Distribution &amp; backing</h3><p>Multi-channel reach incl. LINE, plus a strategic telecom investor (Intouch/InVent).</p></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 13 · FUNDING -->
+    <section class="slide slide--dark" data-title="Funding">
+      <div class="slide-inner">
+        <span class="eyebrow k-eyebrow"><span class="num">13</span> · Funding &amp; backing</span>
+        <h2>Strategically backed by Intouch.</h2>
+        <div class="fund-grid mt">
+          <div class="fund-amt">฿23.83M<small>Invested by InVent — the venture arm of Intouch Holdings (the group behind AIS) — for a ~25% stake, October 2015. (≈ US$674K)</small></div>
+          <div>
+            <div class="ff"><span class="fk">Lead investor</span><span class="fv">InVent / Intouch Holdings</span></div>
+            <div class="ff"><span class="fk">Stake acquired</span><span class="fv">~25%</span></div>
+            <div class="ff"><span class="fk">First round</span><span class="fv">Oct 2015 · ฿23.83M</span></div>
+            <div class="ff"><span class="fk">Follow-on</span><span class="fv">Seed round, 2016</span></div>
+            <div class="ff"><span class="fk">Accelerator</span><span class="fv">AIS "The Start-up" 2014 — winner</span></div>
+            <div class="ff"><span class="fk">Strategic value</span><span class="fv">Telecom distribution &amp; reach</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 14 · TEAM -->
+    <section class="slide" data-title="Team">
+      <div class="slide-inner">
+        <span class="eyebrow k-eyebrow"><span class="num">14</span> · Team</span>
+        <h2>Built by a golfer, run by operators.</h2>
+        <div class="team-lead mt-s">
+          <div class="avatar">฿</div>
+          <div>
+            <div class="who">Bhurich (Purich) Aksorntub</div>
+            <div class="role">Founder · Chief Golf Officer</div>
+            <p>A golf enthusiast who founded Golfdigg after years of frustration booking rounds after work — turning a personal pain point into Thailand's leading golf booking platform.</p>
+          </div>
+        </div>
+        <div class="roles mt-s">
+          <div class="r"><div class="rr">CEO</div><div class="rd">Leadership &amp; strategy</div></div>
+          <div class="r"><div class="rr">Product</div><div class="rd">Booking experience &amp; app</div></div>
+          <div class="r"><div class="rr">Operations</div><div class="rd">Course partnerships</div></div>
+          <div class="r"><div class="rr">Technology</div><div class="rd">Platform &amp; engineering</div></div>
+        </div>
+        <p class="illus mt-s">Roles shown at a functional level; individual titles have shifted across the company's history.</p>
+      </div>
+    </section>
+
+    <!-- 15 · VISION -->
+    <section class="slide" data-title="Vision">
+      <div class="slide-inner">
+        <span class="eyebrow k-eyebrow"><span class="num">15</span> · The back nine</span>
+        <h2>From booking app to Thailand's golf super-app.</h2>
+        <p class="lead">The commission engine funds the expansion — deeper loyalty, smarter pricing, more revenue per golfer, yield tools sold back to courses, and a regional footprint.</p>
+        <div class="takeaways mt">
+          <div class="ta"><span class="n">WHY IT WORKS</span><h3>Perishable inventory</h3><p>Unsold tee times are pure upside — courses discount willingly, Golfdigg clips the incremental revenue.</p></div>
+          <div class="ta"><span class="n">WHY IT LASTS</span><h3>Compounding network</h3><p>Golfers &amp; courses pull each other in; data and loyalty widen the lead over time.</p></div>
+          <div class="ta"><span class="n">WHERE IT GOES</span><h3>Golf lifestyle platform</h3><p>Transfers, travel, media, memberships &amp; regional expansion — many rounds of growth ahead.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 16 · THANK YOU -->
+    <section class="slide slide--dark" data-title="Thank you">
+      <div class="slide-inner">
+        <span class="eyebrow k-eyebrow"><span class="num">16</span> · Thank you</span>
+        <h2 style="font-size:clamp(2rem,2vh+2.6vw,3.4rem)">Empty fairways, filled.</h2>
+        <p class="lead" style="max-width:52ch">Golfdigg turns golf's most perishable asset into a compounding, asset-light marketplace — and there's a long course still to play.</p>
+        <p class="disc"><b>Golfdigg is a real company</b> — บริษัท กอล์ฟดิกก์ จำกัด, operator of golfdigg.com. Compiled from public reporting (2014–2025). Reported figures (courses, users, the 10–20% commission range, the ฿23.83M InVent investment, AIS win) may be dated; items marked <b>illustrative</b> (revenue mix, unit economics, TAM/SAM/SOM) are modelled estimates, not official financials. Not affiliated with or endorsed by Golfdigg Co., Ltd.</p>
+        <div class="src">
+          <a href="https://golfdigg.com/en" target="_blank" rel="noopener">golfdigg.com ↗</a>
+          <a href="https://thestandard.co/startup-scale-up-ep-9-golfdigg/" target="_blank" rel="noopener">THE STANDARD ↗</a>
+          <a href="https://www.nationthailand.com/business/30298649" target="_blank" rel="noopener">Nation Thailand — model ↗</a>
+          <a href="https://www.nationthailand.com/business/30270752" target="_blank" rel="noopener">Nation Thailand — InVent ↗</a>
+          <a href="https://www.macthai.com/2015/10/12/golfdigg-raise-fund-from-invent-intouch-23-million-baht/" target="_blank" rel="noopener">MacThai ↗</a>
+          <a href="https://www.travelmole.com/news/thai-golf-mobile-app-golfdigg-a-first-for-asia/" target="_blank" rel="noopener">TravelMole ↗</a>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- /track -->
+</div><!-- /deck -->
+
+<!-- side arrows -->
+<button class="sidebtn prev" id="sPrev" aria-label="Previous slide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+<button class="sidebtn next" id="sNext" aria-label="Next slide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></button>
+
+<!-- overview -->
+<div class="overview" id="overview" role="dialog" aria-label="Slide overview">
+  <div class="ov-head">
+    <h4>Slide overview</h4>
+    <button class="btn" id="ovClose" aria-label="Close overview">✕</button>
+  </div>
+  <div class="ov-grid" id="ovGrid"></div>
+</div>
+
+<div class="hint" id="hint"><span class="kbd">←</span> <span class="kbd">→</span> navigate · <span class="kbd">O</span> overview · <span class="kbd">F</span> fullscreen</div>
+
+<!-- bottom chrome -->
+<div class="chrome" role="toolbar" aria-label="Presentation controls">
+  <div class="left">
+    <span class="brand"><span class="dot"></span>golf<b>digg</b></span>
+    <span class="deckname">· Business Model</span>
+  </div>
+  <div class="center">
+    <button class="btn" id="prev" aria-label="Previous slide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <span class="counter"><b id="cCur">01</b> / <span id="cTot">17</span></span>
+    <button class="btn" id="next" aria-label="Next slide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></button>
+  </div>
+  <div class="right">
+    <button class="btn" id="ovBtn" aria-label="Slide overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></button>
+    <button class="btn" id="themeBtn" aria-label="Toggle colour theme"><span id="themeIcon">◐</span></button>
+    <button class="btn" id="fsBtn" aria-label="Toggle fullscreen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3m13-5v3a2 2 0 0 1-2 2h-3"/></svg></button>
+  </div>
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement;
+  var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+  root.classList.add('deck-on');
+
+  var track=document.getElementById('track');
+  var slides=Array.prototype.slice.call(track.querySelectorAll('.slide'));
+  var N=slides.length, i=0;
+
+  var cCur=document.getElementById('cCur'), cTot=document.getElementById('cTot'), prog=document.getElementById('prog');
+  var prev=document.getElementById('prev'), next=document.getElementById('next');
+  var sPrev=document.getElementById('sPrev'), sNext=document.getElementById('sNext');
+  cTot.textContent=N;
+
+  function pad(n){return (n<10?'0':'')+n;}
+  function render(){
+    track.style.setProperty('--i', i);
+    cCur.textContent=pad(i+1);
+    prog.style.width=(N>1?(i/(N-1))*100:100)+'%';
+    prev.disabled=sPrev.disabled=(i===0);
+    next.disabled=sNext.disabled=(i===N-1);
+    slides.forEach(function(s,k){
+      var on=k===i;
+      s.classList.toggle('active',on);
+      if('inert' in s){ if(on) s.removeAttribute('inert'); else s.setAttribute('inert',''); }
+      s.setAttribute('aria-hidden', on?'false':'true');
+    });
+    // reset + replay bar widths on the revenue slide
+    if(slides[i].getAttribute('data-title')==='Revenue model' && !reduce){
+      var bars=slides[i].querySelectorAll('.bar>i');
+      bars.forEach(function(b){var w=b.style.width; b.style.width='0'; requestAnimationFrame(function(){requestAnimationFrame(function(){b.style.width=w;});});});
+    }
+    var ov=document.getElementById('ovGrid');
+    if(ov){Array.prototype.forEach.call(ov.children,function(c,k){c.classList.toggle('cur',k===i);});}
+  }
+  function go(n){ n=Math.max(0,Math.min(N-1,n)); if(n===i)return; i=n; render(); }
+
+  prev.addEventListener('click',function(){go(i-1);});
+  next.addEventListener('click',function(){go(i+1);});
+  sPrev.addEventListener('click',function(){go(i-1);});
+  sNext.addEventListener('click',function(){go(i+1);});
+
+  /* keyboard */
+  document.addEventListener('keydown',function(e){
+    if(document.getElementById('overview').classList.contains('open')){
+      if(e.key==='Escape'){toggleOv(false);} return;
+    }
+    switch(e.key){
+      case 'ArrowRight': case 'PageDown': case ' ': case 'Spacebar':
+        e.preventDefault(); go(i+1); break;
+      case 'ArrowLeft': case 'PageUp':
+        e.preventDefault(); go(i-1); break;
+      case 'Home': e.preventDefault(); go(0); break;
+      case 'End': e.preventDefault(); go(N-1); break;
+      case 'o': case 'O': toggleOv(); break;
+      case 'f': case 'F': toggleFs(); break;
+      case 't': case 'T': toggleTheme(); break;
+    }
+  });
+
+  /* touch swipe (horizontal-dominant only) */
+  var tx=0,ty=0,tracking=false;
+  track.addEventListener('touchstart',function(e){var t=e.changedTouches[0];tx=t.clientX;ty=t.clientY;tracking=true;},{passive:true});
+  track.addEventListener('touchend',function(e){
+    if(!tracking)return; tracking=false;
+    var t=e.changedTouches[0], dx=t.clientX-tx, dy=t.clientY-ty;
+    if(Math.abs(dx)>45 && Math.abs(dx)>Math.abs(dy)*1.3){ go(i + (dx<0?1:-1)); }
+  },{passive:true});
+
+  /* overview */
+  var overview=document.getElementById('overview'), ovGrid=document.getElementById('ovGrid');
+  slides.forEach(function(s,k){
+    var b=document.createElement('button');
+    b.className='ov-card';
+    b.innerHTML='<span class="oi">'+pad(k+1)+'</span><span class="ot">'+(s.getAttribute('data-title')||('Slide '+(k+1)))+'</span>';
+    b.addEventListener('click',function(){go(k);toggleOv(false);});
+    ovGrid.appendChild(b);
+  });
+  function toggleOv(force){
+    var open = typeof force==='boolean'?force:!overview.classList.contains('open');
+    overview.classList.toggle('open',open);
+    if(open){Array.prototype.forEach.call(ovGrid.children,function(c,k){c.classList.toggle('cur',k===i);});}
+  }
+  document.getElementById('ovBtn').addEventListener('click',function(){toggleOv();});
+  document.getElementById('ovClose').addEventListener('click',function(){toggleOv(false);});
+
+  /* fullscreen */
+  var fsBtn=document.getElementById('fsBtn');
+  function toggleFs(){
+    try{
+      if(!document.fullscreenElement){ (document.documentElement.requestFullscreen||function(){})().catch&&document.documentElement.requestFullscreen().catch(function(){}); }
+      else if(document.exitFullscreen){ document.exitFullscreen(); }
+    }catch(e){}
+  }
+  if(!document.fullscreenEnabled){ fsBtn.style.display='none'; }
+  else { fsBtn.addEventListener('click',toggleFs); }
+
+  /* theme */
+  var themeIcon=document.getElementById('themeIcon');
+  function sysDark(){return window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches;}
+  function curTheme(){return root.getAttribute('data-theme')||(sysDark()?'dark':'light');}
+  function toggleTheme(){
+    var t=curTheme()==='dark'?'light':'dark';
+    root.setAttribute('data-theme',t);
+    themeIcon.textContent=t==='dark'?'☀':'☾';
+    paintMap();
+  }
+  document.getElementById('themeBtn').addEventListener('click',toggleTheme);
+  themeIcon.textContent=sysDark()?'☀':'☾';
+
+  /* dismiss hint after first navigation or a few seconds */
+  var hint=document.getElementById('hint'), hintGone=false;
+  function killHint(){ if(hintGone)return; hintGone=true; hint.classList.add('gone'); }
+  ['click','keydown','touchstart'].forEach(function(ev){document.addEventListener(ev,function(){setTimeout(killHint,400);},{once:true});});
+  setTimeout(killHint,6000);
+
+  /* ---------- cover canvas: green-reading contour map ---------- */
+  var cv=document.getElementById('greenmap');
+  var ctx=cv&&cv.getContext?cv.getContext('2d'):null;
+  var W=0,H=0,dpr=Math.min(window.devicePixelRatio||1,2),t0=null,raf=0;
+  function colors(){ return {line:'rgba(216,180,102,',fair:'rgba(63,161,115,'}; }
+  function resize(){
+    if(!cv)return; var r=cv.getBoundingClientRect();
+    W=r.width;H=r.height; if(W<2||H<2)return;
+    cv.width=W*dpr;cv.height=H*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  function draw(t){
+    if(!ctx||W<2)return; ctx.clearRect(0,0,W,H); var c=colors();
+    var cx=W*0.74, cy=H*0.40, rings=13;
+    for(var k=0;k<rings;k++){
+      var baseR=24+k*Math.max(24,Math.min(W,H)/12); ctx.beginPath();
+      for(var a=0;a<=6.29;a+=0.12){
+        var wob=Math.sin(a*3+k*0.55+t*0.00025)*10+Math.sin(a*5-k*0.4+t*0.00018)*6+Math.cos(a*2+k*0.9)*8;
+        var rr=baseR+wob, x=cx+Math.cos(a)*rr*1.18, y=cy+Math.sin(a)*rr*0.82;
+        if(a===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+      }
+      ctx.closePath(); ctx.strokeStyle=c.line+(0.05+0.12*(1-k/rings))+')'; ctx.lineWidth=k<2?1.4:1; ctx.stroke();
+    }
+    for(var j=0;j<7;j++){
+      ctx.beginPath(); var yb=H*0.64+j*22;
+      for(var x2=-20;x2<=W*0.62;x2+=14){var yy=yb+Math.sin(x2*0.006+j*0.5+t*0.0002)*16-x2*0.12; if(x2<=-20)ctx.moveTo(x2,yy);else ctx.lineTo(x2,yy);}
+      ctx.strokeStyle=c.fair+(0.05+0.02*j)+')'; ctx.lineWidth=1; ctx.stroke();
+    }
+    ctx.strokeStyle=c.line+'0.5)'; ctx.lineWidth=1.6; ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx,cy-46); ctx.stroke();
+    ctx.fillStyle=c.line+'0.68)'; var fw=Math.sin(t*0.004)*3;
+    ctx.beginPath(); ctx.moveTo(cx,cy-46); ctx.lineTo(cx+22+fw,cy-40); ctx.lineTo(cx,cy-33); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx,cy,3,0,6.29); ctx.fill();
+  }
+  function paintMap(){ if(ctx){resize();draw(t0||0);} }
+  function loop(ts){ if(!t0)t0=ts; draw(ts); raf=requestAnimationFrame(loop); }
+  if(ctx){
+    resize();
+    window.addEventListener('resize',function(){resize();if(reduce)draw(t0||0);});
+    if(reduce)draw(0); else raf=requestAnimationFrame(loop);
+  }
+
+  render();
+})();
+</script>
